@@ -1,0 +1,2288 @@
+{
+  "name": "Cadastro-243439-B",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "cadastro/health",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "GET /health",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        2000,
+        3840
+      ],
+      "id": "11a88a82-e2ea-4580-a7dd-1b3c1adcc4be",
+      "webhookId": "027bf565-2650-4905-ba13-a78a6ecda2fc"
+    },
+    {
+      "parameters": {},
+      "name": "Verificar Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2224,
+        3840
+      ],
+      "id": "47b479a5-930a-4eec-b0a1-8697a04c4f7b",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status-e80rn4ra",
+              "name": "status",
+              "value": "UP",
+              "type": "string"
+            },
+            {
+              "id": "service-jvkqp2l9",
+              "name": "service",
+              "value": "cadastro-identidade",
+              "type": "string"
+            },
+            {
+              "id": "redis-vjbzye4p",
+              "name": "redis",
+              "value": "UP",
+              "type": "string"
+            },
+            {
+              "id": "timestamp-3yzzbbyi",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta health",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2448,
+        3840
+      ],
+      "id": "f8642b51-75e5-4f81-a00d-1b19a66252a5"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Responder health",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2672,
+        3840
+      ],
+      "id": "72aa399b-1aa5-4d5e-adb6-635bc8a773c8"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cadastro/v1/clientes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "POST /v1/clientes",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        2000,
+        4304
+      ],
+      "id": "f5437c98-9edd-473b-8d66-d6d124522c90",
+      "webhookId": "8b08a551-d2ae-46fb-a6e1-570f7a82a2db"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst headers = input.headers ?? {};\nconst body = input.body ?? {};\nconst apiKey = headers['x-api-key'];\nconst pedidoId = headers['x-pedido-id'];\n\nfunction failure(statusCode, error, message) {\n  return [{ json: { valid: false, statusCode, error, message } }];\n}\n\nif (!apiKey) return failure(401, 'UNAUTHORIZED', 'x-api-key obrigatória');\nif (apiKey !== 'turma2026') return failure(403, 'FORBIDDEN', 'x-api-key inválida');\nif (!pedidoId) return failure(400, 'BAD_REQUEST', 'x-pedido-id obrigatório');\nif (typeof body.nome !== 'string' || !body.nome.trim()) return failure(400, 'BAD_REQUEST', 'Campo nome é obrigatório');\nif (typeof body.email !== 'string' || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(body.email.trim())) return failure(400, 'BAD_REQUEST', 'Campo email é inválido');\nif (typeof body.senha !== 'string' || !body.senha) return failure(400, 'BAD_REQUEST', 'Campo senha é obrigatório');\nif (body.saldoInicial === undefined || !Number.isFinite(Number(body.saldoInicial)) || Number(body.saldoInicial) < 0) return failure(400, 'BAD_REQUEST', 'saldoInicial deve ser um número maior ou igual a zero');\n\nreturn [{\n  json: {\n    valid: true,\n    nome: body.nome.trim(),\n    email: body.email.trim().toLowerCase(),\n    senha: body.senha,\n    saldo: Number(body.saldoInicial),\n    pedidoId,\n  },\n}];"
+      },
+      "name": "Validar cadastro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        4304
+      ],
+      "id": "0b0f155c-cd33-4898-b536-8f1cf0a0ebd6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Cadastro válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2448,
+        4304
+      ],
+      "id": "f976254a-3564-4d50-a0c6-b05ccd0ed653"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-8rgjgu7m",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            },
+            {
+              "id": "message-54dkba9w",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta erro cadastro",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2672,
+        4496
+      ],
+      "id": "5414fb57-7b41-411e-abb2-34623f5d8138"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ $('Validar cadastro').item.json.statusCode }}"
+        }
+      },
+      "name": "Responder erro cadastro",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2880,
+        4496
+      ],
+      "id": "c97e76a0-03f3-432f-a35d-a28528fcc584"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "clienteIdExistente",
+        "key": "={{ 'cliente:email:' + $('Validar cadastro').item.json.email }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "name": "Buscar e-mail cadastrado",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        4224
+      ],
+      "id": "b68ef78e-bf73-458c-99df-53d9d8fb0d5f",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.clienteIdExistente }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "E-mail já cadastrado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2880,
+        4288
+      ],
+      "id": "befe18f7-be88-491f-8303-97db99893e13"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-jhn34e4b",
+              "name": "error",
+              "value": "CONFLICT",
+              "type": "string"
+            },
+            {
+              "id": "message-uhdmymy4",
+              "name": "message",
+              "value": "Já existe um cliente com este e-mail",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta e-mail duplicado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3104,
+        4272
+      ],
+      "id": "3c936427-b760-4cb5-9f45-b95240abbb79"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "name": "Responder e-mail duplicado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3296,
+        4272
+      ],
+      "id": "17f90eb9-a154-470c-ab46-d5fb049ba843"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-b0kfw9nz",
+              "name": "id",
+              "value": "={{ Number($json[\"contador:clientes\"]) }}",
+              "type": "number"
+            },
+            {
+              "id": "nome-631qc4xb",
+              "name": "nome",
+              "value": "={{ $('Validar cadastro').item.json.nome }}",
+              "type": "string"
+            },
+            {
+              "id": "email-ebdncf33",
+              "name": "email",
+              "value": "={{ $('Validar cadastro').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "senhaHash-hzmuwkvh",
+              "name": "senhaHash",
+              "value": "={{ $('Validar cadastro').item.json.senha.hash('sha256') }}",
+              "type": "string"
+            },
+            {
+              "id": "token-cw38fa5b",
+              "name": "token",
+              "value": "={{ ($execution.id + '-' + $now.toMillis() + '-' + Math.random()).hash('sha256') }}",
+              "type": "string"
+            },
+            {
+              "id": "saldo-ob21svs4",
+              "name": "saldo",
+              "value": "={{ $('Validar cadastro').item.json.saldo }}",
+              "type": "number"
+            },
+            {
+              "id": "criadoEm-62r5xjoa",
+              "name": "criadoEm",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Preparar cliente",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3104,
+        4096
+      ],
+      "id": "d472d3d4-2451-4608-996c-87c3f4071c03"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'cliente:' + $json.id }}",
+        "value": "={{ JSON.stringify($json) }}",
+        "keyType": "string"
+      },
+      "name": "Salvar cliente",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        3328,
+        4096
+      ],
+      "id": "3fecc5f1-e144-4289-841d-e7d817a56571",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'cliente:email:' + $('Preparar cliente').item.json.email }}",
+        "value": "={{ $('Preparar cliente').item.json.id }}",
+        "keyType": "string"
+      },
+      "name": "Salvar índice e-mail",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        3552,
+        4096
+      ],
+      "id": "df92cab1-2346-4e2d-be86-13274239ef52",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'cliente:token:' + $('Preparar cliente').item.json.token }}",
+        "value": "={{ $('Preparar cliente').item.json.id }}",
+        "keyType": "string"
+      },
+      "name": "Salvar índice token",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        3760,
+        4096
+      ],
+      "id": "e4e763b7-785e-4a7f-88e9-63bdd087b684",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-vkfe11x9",
+              "name": "id",
+              "value": "={{ $('Preparar cliente').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "nome-mjbjewev",
+              "name": "nome",
+              "value": "={{ $('Preparar cliente').item.json.nome }}",
+              "type": "string"
+            },
+            {
+              "id": "email-b5eijyo6",
+              "name": "email",
+              "value": "={{ $('Preparar cliente').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "saldo-a9ij27ip",
+              "name": "saldo",
+              "value": "={{ $('Preparar cliente').item.json.saldo }}",
+              "type": "number"
+            },
+            {
+              "id": "token-2a327cvy",
+              "name": "token",
+              "value": "={{ $('Preparar cliente').item.json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "criadoEm-9k7md5e9",
+              "name": "criadoEm",
+              "value": "={{ $('Preparar cliente').item.json.criadoEm }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta cadastro criado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3984,
+        4096
+      ],
+      "id": "09810693-47ad-494a-81e0-add5f089e145"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "name": "Responder cadastro criado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4208,
+        4096
+      ],
+      "id": "56250384-fbd4-4d3d-88da-07c7cb9c410b"
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "contador:clientes"
+      },
+      "name": "Incrementar contador de clientes",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        4096
+      ],
+      "id": "650d9676-e486-4100-b499-cda3f31e4403",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst headers = input.headers ?? {};\nconst body = input.body ?? {};\n\nconst apiKey = headers['x-api-key'];\nconst pedidoId = headers['x-pedido-id'];\n\nfunction failure(statusCode, error, message) {\n  return [{ json: { valid: false, statusCode, error, message } }];\n}\n\nif (!apiKey) {\n  return failure(401, 'UNAUTHORIZED', 'x-api-key obrigatória');\n}\n\nif (apiKey !== 'turma2026') {\n  return failure(403, 'FORBIDDEN', 'x-api-key inválida');\n}\n\nif (!pedidoId) {\n  return failure(400, 'BAD_REQUEST', 'x-pedido-id obrigatório');\n}\n\nconst clienteId = Number(body.clienteId);\nconst valor = Number(body.valor);\nconst pagamentoId = String(body.pagamentoId ?? '').trim();\nconst tipo = String(body.tipo ?? 'DEBITO').trim().toUpperCase();\n\nif (!Number.isInteger(clienteId) || clienteId <= 0) {\n  return failure(400, 'BAD_REQUEST', 'clienteId inválido');\n}\n\nif (!Number.isFinite(valor) || valor <= 0) {\n  return failure(400, 'BAD_REQUEST', 'valor deve ser maior que zero');\n}\n\nif (!pagamentoId) {\n  return failure(400, 'BAD_REQUEST', 'pagamentoId obrigatório');\n}\nif (!['DEBITO', 'ESTORNO'].includes(tipo)) {\n  return failure(400, 'BAD_REQUEST', 'tipo deve ser DEBITO ou ESTORNO');\n}\n\nreturn [{\n  json: {\n    valid: true,\n    clienteId,\n    valor,\n    pagamentoId,\n    tipo,\n    pedidoId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        5232
+      ],
+      "id": "2dd80053-6ba3-4d8d-adce-ca534896ec5a",
+      "name": "Validar débito"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "clienteRaw",
+        "key": "={{ 'cliente:' + $('Validar débito').item.json.clienteId }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2592,
+        5152
+      ],
+      "id": "ad95e3f7-a4c2-4865-b5c5-ab6d28cd1510",
+      "name": "Buscar cliente para débito",
+      "retryOnFail": true,
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const requisicao = $('Validar débito').item.json;\nconst raw = $json.clienteRaw;\n\nfunction recusar(statusCode, error, message) {\n  return [{\n    json: {\n      approved: false,\n      statusCode,\n      error,\n      message\n    }\n  }];\n}\n\nif (!raw) {\n  return recusar(\n    404,\n    'NOT_FOUND',\n    'Cliente não encontrado'\n  );\n}\n\ntry {\n  const cliente = typeof raw === 'string'\n    ? JSON.parse(raw)\n    : raw;\n\n  if (!cliente?.id) {\n    return recusar(\n      404,\n      'NOT_FOUND',\n      'Cliente não encontrado'\n    );\n  }\n\n  // Cria o histórico de operações caso ainda não exista\n  if (!cliente.pagamentosProcessados) {\n    cliente.pagamentosProcessados = {};\n  }\n\n  const pagamentoId = requisicao.pagamentoId;\n  const valor = requisicao.valor;\n  const tipo = requisicao.tipo ?? 'DEBITO';\n\n  // Cada tipo de operação possui sua própria idempotência.\n  // Exemplo:\n  // PAG-001:DEBITO\n  // PAG-001:ESTORNO\n  const chaveOperacao = `${pagamentoId}:${tipo}`;\n\n  // Verifica se a operação já foi processada\n  let pagamentoAnterior =\n    cliente.pagamentosProcessados[chaveOperacao];\n\n  // Compatibilidade com registros antigos:\n  // antes da alteração, os débitos eram salvos somente\n  // usando o pagamentoId como chave.\n  if (!pagamentoAnterior && tipo === 'DEBITO') {\n    pagamentoAnterior =\n      cliente.pagamentosProcessados[pagamentoId];\n  }\n\n  if (pagamentoAnterior) {\n\n    const valorAnterior = Number(\n      pagamentoAnterior.valor ??\n      pagamentoAnterior.resposta?.valor ??\n      pagamentoAnterior.resposta?.valorDebitado\n    );\n\n    const tipoAnterior =\n      pagamentoAnterior.tipo ??\n      pagamentoAnterior.resposta?.tipo ??\n      'DEBITO';\n\n    // Mesmo pagamentoId + mesmo tipo,\n    // mas valor diferente = conflito\n    if (\n      valorAnterior !== Number(valor) ||\n      tipoAnterior !== tipo\n    ) {\n      return recusar(\n        400,\n        'PAYMENT_ID_CONFLICT',\n        'pagamentoId já foi usado com dados diferentes'\n      );\n    }\n\n    // Mesma operação já processada:\n    // não altera o saldo novamente.\n    const respostaAnterior =\n      pagamentoAnterior.resposta ?? {};\n\n    return [{\n      json: {\n        approved: true,\n        statusCode: 200,\n        clienteId:\n          respostaAnterior.clienteId ??\n          pagamentoAnterior.clienteId ??\n          cliente.id,\n\n        pagamentoId:\n          respostaAnterior.pagamentoId ??\n          pagamentoId,\n\n        tipo: tipo,\n\n        valor: valorAnterior,\n\n        saldoAtual:\n          respostaAnterior.saldoAtual ??\n          cliente.saldo,\n\n        clienteAtualizado: JSON.stringify(cliente),\n\n        idempotente: true\n      }\n    }];\n  }\n\n  const saldoAtual = Number(cliente.saldo);\n\n  if (!Number.isFinite(saldoAtual)) {\n    return recusar(\n      500,\n      'INTERNAL_ERROR',\n      'Saldo do cliente inválido'\n    );\n  }\n\n  let novoSaldo;\n  let mensagemOperacao;\n\n  // =========================\n  // DÉBITO\n  // =========================\n  if (tipo === 'DEBITO') {\n\n    // Débito só pode acontecer se houver saldo suficiente\n    if (saldoAtual < valor) {\n      return recusar(\n        400,\n        'INSUFFICIENT_FUNDS',\n        'Saldo insuficiente para concluir o pagamento'\n      );\n    }\n\n    novoSaldo =\n      Math.round((saldoAtual - valor) * 100) / 100;\n\n    mensagemOperacao =\n      'Débito realizado com sucesso';\n\n  // =========================\n  // ESTORNO\n  // =========================\n  } else if (tipo === 'ESTORNO') {\n\n    // Estorno devolve o valor para a carteira\n    novoSaldo =\n      Math.round((saldoAtual + valor) * 100) / 100;\n\n    mensagemOperacao =\n      'Estorno realizado com sucesso';\n\n  } else {\n\n    return recusar(\n      400,\n      'BAD_REQUEST',\n      'Tipo de operação inválido'\n    );\n  }\n\n  // Atualiza o saldo do cliente\n  cliente.saldo = novoSaldo;\n  cliente.atualizadoEm = new Date().toISOString();\n\n  // Resultado da operação\n  const resposta = {\n    aprovado: true,\n    clienteId: cliente.id,\n    pagamentoId: pagamentoId,\n    tipo: tipo,\n    valor: valor,\n    saldoAtual: novoSaldo,\n    mensagem: mensagemOperacao\n  };\n\n  // Salva a operação usando pagamentoId + tipo.\n  //\n  // Exemplo:\n  // PAG-001:DEBITO\n  // PAG-001:ESTORNO\n  //\n  // Isso permite que o mesmo pagamento seja debitado\n  // e posteriormente estornado sem conflito.\n  cliente.pagamentosProcessados[chaveOperacao] = {\n    clienteId: cliente.id,\n    valor: valor,\n    tipo: tipo,\n    resposta: resposta\n  };\n\n  return [{\n    json: {\n      approved: true,\n      statusCode: 200,\n      clienteId: cliente.id,\n      pagamentoId: pagamentoId,\n      tipo: tipo,\n      valor: valor,\n      saldoAtual: novoSaldo,\n      clienteAtualizado: JSON.stringify(cliente),\n      idempotente: false\n    }\n  }];\n\n} catch (error) {\n\n  return recusar(\n    500,\n    'INTERNAL_ERROR',\n    'Não foi possível processar o saldo do cliente'\n  );\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        5152
+      ],
+      "id": "9ca3dfbc-f414-4e7a-b971-3191e06aac1e",
+      "name": "Processar débito"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3364441d-8456-409c-b6fa-55d004cb1b31",
+              "name": "aprovado",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "c8f181ce-0716-40a0-9608-c72f85f6b2d8",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            },
+            {
+              "id": "d7b9650b-a617-443d-a2b8-e34fbdcc8506",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3296,
+        5408
+      ],
+      "id": "8dfbda11-084a-44b9-8619-76dac13ee1a3",
+      "name": "Resposta débito recusado"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ $('Processar débito').item.json.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3520,
+        5408
+      ],
+      "id": "120eaf15-59c3-4990-8ca0-f41ec53ca9b0",
+      "name": "Responder débito recusado"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'cliente:' + $('Processar débito').item.json.clienteId }}",
+        "value": "={{ $('Processar débito').item.json.clienteAtualizado }}",
+        "keyType": "string"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        3264,
+        5056
+      ],
+      "id": "684a0bb4-bc3f-43dd-b7bd-6f910ab1c475",
+      "name": "Salvar cliente com saldo atualizado",
+      "retryOnFail": true,
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe456629-695b-4bf0-b11c-705f4546e3da",
+              "name": "aprovado",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "14088803-3f0f-4b65-a262-012d94da43f7",
+              "name": "clienteId",
+              "value": "={{ $('Processar débito').item.json.clienteId }}",
+              "type": "number"
+            },
+            {
+              "id": "fd902c25-7060-4135-96fa-e567cfaf9303",
+              "name": "pagamentoId",
+              "value": "={{ $('Processar débito').item.json.pagamentoId }}",
+              "type": "string"
+            },
+            {
+              "id": "c33d3470-7d8d-4f0b-95e2-627f73ec18c6",
+              "name": "valor",
+              "value": "={{ $('Processar débito').item.json.valor }}",
+              "type": "number"
+            },
+            {
+              "id": "9ed2f4d6-c211-415b-baae-2949a1076093",
+              "name": "saldoAtual",
+              "value": "={{ $('Processar débito').item.json.saldoAtual }}",
+              "type": "number"
+            },
+            {
+              "id": "8b3f6d0b-41e9-4d66-b450-0ab414150107",
+              "name": "tipo",
+              "value": "={{ $('Processar débito').item.json.tipo }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3456,
+        5056
+      ],
+      "id": "b0d11b57-026d-49be-9d9f-1f38bb9334e1",
+      "name": "Resposta débito aprovado"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3648,
+        5056
+      ],
+      "id": "a068fdee-fb10-4bfe-a091-dc77598583e7",
+      "name": "Responder débito aprovado"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cadastro/v1/carteiras/debito",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1984,
+        5232
+      ],
+      "id": "b6e12d92-cc2b-4093-b508-ee7b509bfe41",
+      "name": "POST /v1/carteiras/debito",
+      "webhookId": "9769b3fe-89e0-43ad-b80a-5515b103f0a4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cb7287c-5997-47b2-9f01-397ed1b72ac3",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2368,
+        5232
+      ],
+      "id": "bcc4c8ab-7ab0-41f4-a053-b2ac0aa95f6e",
+      "name": "Débito válido?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50899116-c95c-4969-ac4c-013db767fb4b",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            },
+            {
+              "id": "d686dc9a-f002-4d46-b464-9733364366ca",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2608,
+        5424
+      ],
+      "id": "1316ba0a-c4c5-4a27-8560-2433ea08b5f3",
+      "name": "Resposta erro débito"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ $('Validar débito').item.json.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2832,
+        5424
+      ],
+      "id": "27ae7ab6-2086-4579-bfe6-d6829d07c5ee",
+      "name": "Responder erro débito"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9a1c2fb7-8374-4c94-9236-83a51a8d8fa8",
+              "leftValue": "={{ $json.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3040,
+        5152
+      ],
+      "id": "5107f5b5-3879-4188-8223-67dcfe5c8491",
+      "name": "Débito aprovado?"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cadastro/v1/auth/validar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1984,
+        5552
+      ],
+      "id": "3827148b-210e-43ce-b7c8-7a2f593d63ce",
+      "name": "POST /v1/auth/validar",
+      "webhookId": "a52c9394-a2c5-4be2-ba05-d1af4c2db1f3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const headers = $json.headers || {};\nconst body = $json.body || {};\n\nconst apiKey = headers['x-api-key'] || headers['X-API-Key'];\nconst token = body.token;\n\nfunction erro(statusCode, error, message) {\n  return [{\n    json: {\n      statusCode,\n      error,\n      message\n    }\n  }];\n}\n\n// Valida x-api-key\nif (apiKey !== 'turma2026') {\n  return erro(\n    403,\n    'FORBIDDEN',\n    'x-api-key inválida'\n  );\n}\n\n// Valida token\nif (!token || typeof token !== 'string' || !token.trim()) {\n  return erro(\n    401,\n    'UNAUTHORIZED',\n    'Token não informado'\n  );\n}\n\nreturn [{\n  json: {\n    valid: true,\n    token: token.trim()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        5552
+      ],
+      "id": "52319815-3624-47ab-8124-69738af03be2",
+      "name": "Valida Token"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "clienteId",
+        "key": "={{ 'cliente:token:' + $('Valida Token').item.json.token }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        5552
+      ],
+      "id": "8732821f-1385-484d-9670-b78b350354a2",
+      "name": "Busca Token no Redis",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3104,
+        5552
+      ],
+      "id": "c66475c8-1bba-436f-be29-83d45d8dfdcd",
+      "name": "Devolve Perfil"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "clienteRaw",
+        "key": "={{ 'cliente:' + $('Busca Token no Redis').item.json.clienteId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        5552
+      ],
+      "id": "c9eff111-4761-4a43-b872-dcf594cdf4c8",
+      "name": "Busca o Cliente",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.clienteRaw;\n\nif (!raw) {\n  return [{\n    json: {\n      statusCode: 401,\n      error: 'UNAUTHORIZED',\n      message: 'Token inválido'\n    }\n  }];\n}\n\ntry {\n  const cliente = typeof raw === 'string'\n    ? JSON.parse(raw)\n    : raw;\n\n  if (!cliente?.id) {\n    return [{\n      json: {\n        statusCode: 401,\n        error: 'UNAUTHORIZED',\n        message: 'Token inválido'\n      }\n    }];\n  }\n\n  return [{\n    json: {\n      statusCode: 200,\n      id: cliente.id,\n      nome: cliente.nome,\n      email: cliente.email\n    }\n  }];\n\n} catch (error) {\n  return [{\n    json: {\n      statusCode: 500,\n      error: 'INTERNAL_ERROR',\n      message: 'Não foi possível validar o token'\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        5552
+      ],
+      "id": "5edfd328-53f6-4259-ab0f-d080c513dd2e",
+      "name": "Monta Perfil"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"statusCode\": 503,\n  \"aprovado\": false,\n  \"error\": \"REDIS_INDISPONÍVEL\",\n  \"message\": \"Serviço de armazenamento temporariamente indisponível\"\n}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2832,
+        5280
+      ],
+      "id": "d89876c9-09e4-4808-a654-1a4697530c56",
+      "name": "FB buscar cliente"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"statusCode\": 503,\n  \"aprovado\": false,\n  \"error\": \"REDIS_INDISPONÍVEL\",\n  \"message\": \"Não foi possível persistir o débito. Operação não confirmada\"\n}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3456,
+        5248
+      ],
+      "id": "0ae90b21-2578-4728-b53a-3dc61a1b0cb2",
+      "name": "FB salvar cliente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://pzaas.online/webhook/v1/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "turma2026"
+            },
+            {
+              "name": "x-pedido-id",
+              "value": "={{$json.pedidoId}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  eventId: $json.eventId,\n  timestamp: $json.timestamp,\n  service: $json.service,\n  action: $json.action,\n  status: $json.status,\n  level: $json.level,\n  message: $json.message,\n  metadata: $json.metadata\n})\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        5536,
+        4560
+      ],
+      "id": "2ec46517-e606-4af9-afc1-a5c7ae0f937f",
+      "name": "Enviar log ao Logger",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst request = $('GET /health').item.json;\nconst headers = request.headers ?? {};\n\nconst pedidoId =\n  headers['x-pedido-id'] ||\n  headers['X-Pedido-Id'] ||\n  null;\n\nconst eventId =\n  `LOG-${$execution.id}-${Date.now()}`;\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: 'HEALTH_CHECK',\n    status: 'SUCCESS',\n    level: 'INFO',\n    message: 'Healthcheck executado com sucesso',\n    pedidoId: pedidoId,\n    metadata: {\n      redis: 'UP'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4784,
+        3856
+      ],
+      "id": "5f8e3734-ca47-4bb6-bca5-9ce1716ac960",
+      "name": "Montar log — health"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\nconst request = $('Validar cadastro').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nconst eventId =\n  `LOG-${$execution.id}-${Date.now()}`;\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: 'CREATE_CLIENT',\n    status: 'SUCCESS',\n    level: 'INFO',\n    message: 'Cliente criado com sucesso',\n    pedidoId: pedidoId,\n    metadata: {\n      clienteId: response.id,\n      email: response.email,\n      saldoInicial: response.saldo\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4752,
+        4000
+      ],
+      "id": "25e4e2c9-134c-43e8-8176-d27f1e23d52b",
+      "name": "Montar log — cadastro criado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\nconst request = $('POST /v1/clientes').item.json;\n\nconst headers = request.headers ?? {};\n\nconst pedidoId =\n  headers['x-pedido-id'] ||\n  headers['X-Pedido-Id'] ||\n  null;\n\nconst eventId =\n  `LOG-${$execution.id}-${Date.now()}`;\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: 'CREATE_CLIENT',\n    status: 'FAILED',\n    level: 'WARN',\n    message: response.message || 'Cadastro recusado',\n    pedidoId: pedidoId,\n    metadata: {\n      error: response.error\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4464,
+        4256
+      ],
+      "id": "475fe92d-500c-439a-81a9-4649dd3eab44",
+      "name": "Montar log — cadastro recusado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\nconst request = $('Validar consulta cliente').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nconst eventId = `LOG-${$execution.id}-${Date.now()}`;\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: 'GET_CLIENT',\n    status: 'SUCCESS',\n    level: 'INFO',\n    message: 'Cliente consultado com sucesso',\n    pedidoId: pedidoId,\n    metadata: {\n      clienteId: response.id\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4288,
+        4416
+      ],
+      "id": "aaf604a5-4f35-4747-ab15-9bd22e0e8f32",
+      "name": "Montar log — consulta cliente"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\nconst request = $('Validar débito').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nconst eventId = `LOG-${$execution.id}-${Date.now()}`;\n\nconst tipo = request.tipo || 'DEBITO';\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: tipo === 'ESTORNO'\n      ? 'REFUND_WALLET'\n      : 'DEBIT_WALLET',\n    status: 'FAILED',\n    level: 'WARN',\n    message: response.message ||\n      (tipo === 'ESTORNO'\n        ? 'Estorno recusado'\n        : 'Débito recusado'),\n    pedidoId: pedidoId,\n    metadata: {\n      clienteId: request.clienteId,\n      pagamentoId: request.pagamentoId,\n      tipo: tipo,\n      valor: request.valor,\n      error: response.error\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        5200
+      ],
+      "id": "7c45859e-4b70-421c-bfa4-a21486cea7f6",
+      "name": "Montar log — débito recusado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\n\nconst request = $('POST /v1/auth/validar').item.json;\nconst headers = request.headers ?? {};\n\nconst pedidoId =\n  request.pedidoId ??\n  headers['x-pedido-id'] ??\n  headers['X-Pedido-Id'] ??\n  null;\n\nconst eventId = `LOG-${$execution.id}-${Date.now()}`;\n\nconst success =\n  Number(response.statusCode) === 200;\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: 'VALIDATE_TOKEN',\n    status: success ? 'SUCCESS' : 'FAILED',\n    level: success ? 'INFO' : 'WARN',\n    message: success\n      ? 'Token validado com sucesso'\n      : (response.message || 'Token inválido'),\n    pedidoId: pedidoId,\n    metadata: success\n      ? {\n          clienteId: response.id\n        }\n      : {\n          error: response.error\n        }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4656,
+        5552
+      ],
+      "id": "7c681d39-4d71-4017-bf46-39b51b5a1fc2",
+      "name": "Montar log — token validado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\nconst request = $('Validar débito').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nconst eventId = `LOG-${$execution.id}-${Date.now()}`;\n\nconst tipo = response.tipo || request.tipo || 'DEBITO';\n\nconst mensagem = tipo === 'ESTORNO'\n  ? 'Estorno realizado com sucesso'\n  : 'Débito realizado com sucesso';\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: tipo === 'ESTORNO' ? 'REFUND_WALLET' : 'DEBIT_WALLET',\n    status: 'SUCCESS',\n    level: 'INFO',\n    message: mensagem,\n    pedidoId: pedidoId,\n    metadata: {\n      clienteId: response.clienteId,\n      pagamentoId: response.pagamentoId,\n      tipo: tipo,\n      valor: response.valor,\n      saldoAtual: response.saldoAtual\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        4848
+      ],
+      "id": "328ae3a4-06b1-4cf1-a3c0-75a6daebead4",
+      "name": "Montar log — débito aprovado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString();\n\nconst response = $input.first().json;\nconst request = $('Validar consulta cliente').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nconst eventId = `LOG-${$execution.id}-${Date.now()}`;\n\nreturn [{\n  json: {\n    eventId,\n    timestamp: now,\n    service: '8',\n    action: 'GET_CLIENT',\n    status: 'FAILED',\n    level: 'WARN',\n    message: response.message || 'Cliente não encontrado',\n    pedidoId: pedidoId,\n    metadata: {\n      clienteId: request.clienteId,\n      error: response.error\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4368,
+        4624
+      ],
+      "id": "6a987ca0-6a1b-4d3c-9c5a-9d7b0f945b1c",
+      "name": "Montar log — consulta não encontrada"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Responder consulta cliente",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3552,
+        4640
+      ],
+      "id": "71206292-95b7-4c0c-9a76-8ba96d35bb4a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-xol3xvnf",
+              "name": "id",
+              "value": "={{ $json.cliente.id }}",
+              "type": "number"
+            },
+            {
+              "id": "nome-mgrwu9vo",
+              "name": "nome",
+              "value": "={{ $json.cliente.nome }}",
+              "type": "string"
+            },
+            {
+              "id": "email-qw1mzcb3",
+              "name": "email",
+              "value": "={{ $json.cliente.email }}",
+              "type": "string"
+            },
+            {
+              "id": "existe-j49yejfn",
+              "name": "existe",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta consulta cliente",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3328,
+        4640
+      ],
+      "id": "2acaa96c-8637-4c2b-8e8d-2ea5635f3619"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "name": "Responder cliente não encontrado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3552,
+        4832
+      ],
+      "id": "ed28ab5f-71da-4b68-8f0b-f0b17de5a543"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-vkjzkqhv",
+              "name": "error",
+              "value": "NOT_FOUND",
+              "type": "string"
+            },
+            {
+              "id": "message-cazk2lyx",
+              "name": "message",
+              "value": "Cliente não encontrado",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta cliente não encontrado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3328,
+        4832
+      ],
+      "id": "1ecdff3d-bcd7-46bb-884f-d0cb75fcfbd8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.found }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Cliente encontrado na consulta?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3104,
+        4672
+      ],
+      "id": "68e33d6d-23f8-4f35-88aa-7455d4dbe81a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.clienteRaw;\nif (!raw) return [{ json: { found: false } }];\n\ntry {\n  const cliente = typeof raw === 'string' ? JSON.parse(raw) : raw;\n  if (!cliente?.id) return [{ json: { found: false } }];\n  return [{ json: { found: true, cliente } }];\n} catch (error) {\n  return [{ json: { found: false } }];\n}"
+      },
+      "name": "Converter cliente da consulta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        4672
+      ],
+      "id": "b93b3716-6c0b-4ff5-8304-7e43e48d36ae"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "clienteRaw",
+        "key": "={{ 'cliente:' + $('Validar consulta cliente').item.json.clienteId }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "name": "Buscar cliente para consulta",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        4672
+      ],
+      "id": "992fd137-44c5-43f8-9eb5-b02a7c7cb280",
+      "credentials": {
+        "redis": {
+          "id": "wmI3L40yk1WDOHf5",
+          "name": "Redis account 14"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ $('Validar consulta cliente').item.json.statusCode }}"
+        }
+      },
+      "name": "Responder erro consulta cliente",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2880,
+        4912
+      ],
+      "id": "d38ceb3c-b36f-4950-b16e-9f8da182d326"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-urf09030",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            },
+            {
+              "id": "message-20jjk0kx",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Resposta erro consulta cliente",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2672,
+        4912
+      ],
+      "id": "23855a7e-3ed3-4451-9f96-1b4b0bdc656c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Consulta cliente válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2448,
+        4752
+      ],
+      "id": "6a047213-b160-4fe2-9744-ecf311557f57"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst headers = input.headers ?? {};\nconst clienteId = input.params?.clienteId;\nconst apiKey = headers['x-api-key'];\nconst pedidoId = headers['x-pedido-id'];\n\nfunction failure(statusCode, error, message) {\n  return [{ json: { valid: false, statusCode, error, message } }];\n}\n\nif (!apiKey) return failure(401, 'UNAUTHORIZED', 'x-api-key obrigatória');\nif (apiKey !== 'turma2026') return failure(403, 'FORBIDDEN', 'x-api-key inválida');\nif (!pedidoId) return failure(400, 'BAD_REQUEST', 'x-pedido-id obrigatório');\nif (typeof clienteId !== 'string' || !clienteId.trim()) return failure(400, 'BAD_REQUEST', 'clienteId é obrigatório');\n\nreturn [{ json: { valid: true, clienteId: clienteId.trim(), pedidoId, resource: 'cliente' } }];"
+      },
+      "name": "Validar consulta cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        4752
+      ],
+      "id": "251b767a-576c-4a8d-b511-183ae6dad5b3"
+    },
+    {
+      "parameters": {
+        "path": "cadastro/v1/clientes/:clienteId",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "GET /v1/clientes/:clienteId",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        2000,
+        4752
+      ],
+      "id": "c173e8b3-e96c-4c48-a450-7bc358f4684d",
+      "webhookId": "7c5b0659-106a-49cd-a03f-1fcffbec089b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const request = $('POST /v1/clientes').item.json;\n\nconst headers = request.headers ?? {};\n\nconst pedidoId =\n  request.pedidoId ??\n  headers['x-pedido-id'] ??\n  headers['X-Pedido-Id'] ??\n  null;\n\nreturn [{\n  json: {\n    metricName: 'client_created_total',\n    value: 1,\n    unit: 'count',\n    service: '8',\n    pedidoId: pedidoId,\n    metadata: {\n      operation: 'CREATE_CLIENT'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4736,
+        4144
+      ],
+      "id": "16a4b805-b335-4969-8a68-1142e1a778ab",
+      "name": "Montar métrica — cadastro criado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst request = $('Validar débito').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nreturn [{\n  json: {\n    metricName: 'wallet_operation_total',\n    value: 1,\n    unit: 'count',\n    service: '8',\n    pedidoId: pedidoId,\n    orderId: pedidoId,\n    metadata: {\n      tipo: response.tipo || request.tipo || 'DEBITO',\n      resultado: 'SUCCESS'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        5008
+      ],
+      "id": "805290b5-8e1b-4566-a05e-961efbac9221",
+      "name": "Montar métrica — débito aprovado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst request = $('Validar débito').item.json;\n\nconst pedidoId = request.pedidoId ?? null;\n\nreturn [{\n  json: {\n    metricName: 'wallet_operation_total',\n    value: 1,\n    unit: 'count',\n    service: '8',\n    pedidoId: pedidoId,\n    orderId: pedidoId,\n    metadata: {\n      tipo: request.tipo || 'DEBITO',\n      resultado: response.error || 'FAILED'\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        5360
+      ],
+      "id": "121274f9-bf6c-4080-b3b7-3b8d87514a39",
+      "name": "Montar métrica — débito recusado"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://pzaas.online/webhook/v1/metric",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "turma2026"
+            },
+            {
+              "name": "x-pedido-id",
+              "value": "={{$json.pedidoId}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  metricName: $json.metricName,\n  value: $json.value,\n  unit: $json.unit,\n  service: $json.service,\n  orderId: $json.orderId ?? $json.pedidoId ?? null,\n  metadata: $json.metadata ?? {}\n})\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        5552,
+        4976
+      ],
+      "id": "49541a0a-a99d-4cf3-8481-c014829b77d8",
+      "name": "Enviar métricas ao Logger"
+    },
+    {
+      "parameters": {
+        "content": "Verifica se o Serviço 08 está funcionando e se o Redis está disponível. Retorna o status de saúde do serviço."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        3808
+      ],
+      "id": "0532ff80-d3f3-495e-aa6b-c363079dd796",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Cadastra um novo cliente, validando os dados e verificando se o e-mail já está registrado. Salva o cliente no Redis e retorna os dados criados.\n\n\n{\n  \"nome\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"senha\": \"123456\",\n  \"saldoInicial\": 100\n}",
+        "height": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        4272
+      ],
+      "id": "03f03bc4-9032-4863-bf69-c6297116ebd0",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Consulta os dados de um cliente pelo seu ID. Retorna as informações cadastradas ou erro 404 caso o cliente não seja encontrado."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        4720
+      ],
+      "id": "3f5d837d-7f1e-479e-98e4-ea6cc8ebd6d2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Realiza uma operação na carteira do cliente. Pode debitar ou estornar um valor, atualizando o saldo e garantindo a idempotência através do pagamentoId.\n\n\n{\n  \"clienteId\": 1,\n  \"valor\": 50,\n  \"tipo\": \"DEBITO\",\n  \"pagamentoId\": \"PAG-001\"\n}",
+        "height": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        5104
+      ],
+      "id": "97600c33-460f-49b1-89fc-569ecfd4c149",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Valida o token de autenticação do cliente. Quando válido, consulta o Redis e retorna o perfil e os dados do cliente associado ao token.\n\n{\n  \"token\": \"TOKEN_DO_CLIENTE\"\n}",
+        "height": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        5536
+      ],
+      "id": "c6cfed41-d952-4a43-8f20-d4da2327d194",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Envia uma métrica do Serviço 08 para o Logger, registrando informações como nome da métrica, valor, unidade, serviço e pedido.\n\n{\n  \"metricName\": \"wallet_operation_total\",\n  \"value\": 1,\n  \"service\": \"8\"\n}",
+        "height": 320,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5520,
+        5168
+      ],
+      "id": "ca4bfbb4-a02a-4248-8fbb-1dcc24557768",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "Envia os registros de execução do Serviço 08 para o Logger, permitindo acompanhar operações, sucessos e falhas do serviço.\n\n\n{\n  \"eventId\": \"LOG-001\",\n  \"timestamp\": \"2026-09-09T17:00:00.000Z\",\n  \"service\": \"8\",\n  \"action\": \"DEBIT_WALLET\",\n  \"status\": \"SUCCESS\",\n  \"level\": \"INFO\",\n  \"message\": \"Débito realizado com sucesso\",\n  \"metadata\": {\n    \"clienteId\": 1,\n    \"pagamentoId\": \"PAG-001\",\n    \"tipo\": \"DEBITO\",\n    \"valor\": 50\n  }\n}",
+        "height": 576,
+        "width": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5504,
+        3952
+      ],
+      "id": "8e21245f-6f72-4334-a2ef-932bcecd1917",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "Documentação do serviço:\n\n\n\n\nhttps://docs.google.com/document/d/e/2PACX-1vT5n8tyK3BtuBMca-1iPIYQ0VKqEfs5MGvUNRMkJuoy101gUbj0BTnPDt7iFG1WPF3zPvP1kG2Xo_Yh/pub",
+        "height": 304,
+        "width": 400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3328,
+        3440
+      ],
+      "id": "7d8808ad-994c-4c44-a146-8f7fa65b52bd",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GET /health": {
+      "main": [
+        [
+          {
+            "node": "Verificar Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Redis": {
+      "main": [
+        [
+          {
+            "node": "Resposta health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta health": {
+      "main": [
+        [
+          {
+            "node": "Responder health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /v1/clientes": {
+      "main": [
+        [
+          {
+            "node": "Validar cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar cadastro": {
+      "main": [
+        [
+          {
+            "node": "Cadastro válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cadastro válido?": {
+      "main": [
+        [
+          {
+            "node": "Buscar e-mail cadastrado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta erro cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta erro cadastro": {
+      "main": [
+        [
+          {
+            "node": "Responder erro cadastro",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — cadastro recusado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar e-mail cadastrado": {
+      "main": [
+        [
+          {
+            "node": "E-mail já cadastrado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E-mail já cadastrado?": {
+      "main": [
+        [
+          {
+            "node": "Resposta e-mail duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Incrementar contador de clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incrementar contador de clientes": {
+      "main": [
+        [
+          {
+            "node": "Preparar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta e-mail duplicado": {
+      "main": [
+        [
+          {
+            "node": "Responder e-mail duplicado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — cadastro recusado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar cliente": {
+      "main": [
+        [
+          {
+            "node": "Salvar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar cliente": {
+      "main": [
+        [
+          {
+            "node": "Salvar índice e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar índice e-mail": {
+      "main": [
+        [
+          {
+            "node": "Salvar índice token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar índice token": {
+      "main": [
+        [
+          {
+            "node": "Resposta cadastro criado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta cadastro criado": {
+      "main": [
+        [
+          {
+            "node": "Responder cadastro criado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — cadastro criado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar métrica — cadastro criado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar débito": {
+      "main": [
+        [
+          {
+            "node": "Débito válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar cliente para débito": {
+      "main": [
+        [
+          {
+            "node": "Processar débito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FB buscar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar débito": {
+      "main": [
+        [
+          {
+            "node": "Débito aprovado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta débito recusado": {
+      "main": [
+        [
+          {
+            "node": "Responder débito recusado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — débito recusado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar métrica — débito recusado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar cliente com saldo atualizado": {
+      "main": [
+        [
+          {
+            "node": "Resposta débito aprovado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FB salvar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta débito aprovado": {
+      "main": [
+        [
+          {
+            "node": "Responder débito aprovado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — débito aprovado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar métrica — débito aprovado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /v1/carteiras/debito": {
+      "main": [
+        [
+          {
+            "node": "Validar débito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Débito válido?": {
+      "main": [
+        [
+          {
+            "node": "Buscar cliente para débito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta erro débito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta erro débito": {
+      "main": [
+        [
+          {
+            "node": "Responder erro débito",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — débito recusado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Débito aprovado?": {
+      "main": [
+        [
+          {
+            "node": "Salvar cliente com saldo atualizado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta débito recusado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /v1/auth/validar": {
+      "main": [
+        [
+          {
+            "node": "Valida Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valida Token": {
+      "main": [
+        [
+          {
+            "node": "Busca Token no Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca Token no Redis": {
+      "main": [
+        [
+          {
+            "node": "Busca o Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca o Cliente": {
+      "main": [
+        [
+          {
+            "node": "Monta Perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta Perfil": {
+      "main": [
+        [
+          {
+            "node": "Devolve Perfil",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar log — token validado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — health": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — cadastro criado": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — cadastro recusado": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — consulta cliente": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — débito recusado": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — token validado": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — débito aprovado": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar log — consulta não encontrada": {
+      "main": [
+        [
+          {
+            "node": "Enviar log ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta consulta cliente": {
+      "main": [
+        [
+          {
+            "node": "Montar log — consulta cliente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Responder consulta cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta cliente não encontrado": {
+      "main": [
+        [
+          {
+            "node": "Montar log — consulta não encontrada",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Responder cliente não encontrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cliente encontrado na consulta?": {
+      "main": [
+        [
+          {
+            "node": "Resposta consulta cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta cliente não encontrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Converter cliente da consulta": {
+      "main": [
+        [
+          {
+            "node": "Cliente encontrado na consulta?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar cliente para consulta": {
+      "main": [
+        [
+          {
+            "node": "Converter cliente da consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta erro consulta cliente": {
+      "main": [
+        [
+          {
+            "node": "Montar log — consulta não encontrada",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Responder erro consulta cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consulta cliente válida?": {
+      "main": [
+        [
+          {
+            "node": "Buscar cliente para consulta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta erro consulta cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar consulta cliente": {
+      "main": [
+        [
+          {
+            "node": "Consulta cliente válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET /v1/clientes/:clienteId": {
+      "main": [
+        [
+          {
+            "node": "Validar consulta cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar métrica — cadastro criado": {
+      "main": [
+        [
+          {
+            "node": "Enviar métricas ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder cadastro criado": {
+      "main": [
+        []
+      ]
+    },
+    "Montar métrica — débito aprovado": {
+      "main": [
+        [
+          {
+            "node": "Enviar métricas ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar métrica — débito recusado": {
+      "main": [
+        [
+          {
+            "node": "Enviar métricas ao Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c53314fa-0733-46be-b757-30146dea8dbe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8a5832cfccebf1f6e4152d67714b8a9e39672100660b3961e0850a37e9a65b24"
+  },
+  "nodeGroups": [],
+  "id": "WrDecBlRMp8pe86i",
+  "tags": []
+}
